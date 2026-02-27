@@ -1,0 +1,9 @@
+DATEINAME: sales_q1_2026.csv
+INHALT (Auszug):
+date,product_name,views,add_to_cart,purchases,revenue
+2026-01-15,SmartMug Pro,1500,300,150,5998.50
+2026-01-28,SmartMug Pro,1200,250,110,4398.90
+2026-02-14,SmartMug Pro,2500,600,300,11997.00
+2026-02-22,SmartMug Pro,1800,450,200,7998.00
+2026-03-05,SmartMug Pro,2100,500,250,9997.50
+2026-03-20,SmartMug Pro,2800,700,350,13996.50
