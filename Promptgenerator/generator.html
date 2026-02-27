@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prompt Generator & Builder</title>
+    <link rel="icon" href="res/favicon.ico">
+    <meta property="og:title" content="Prompt Generator – Strukturierter KI Prompt Generator" />
+    <meta name="description" content="Lokaler AI prompt generator. Erstelle strukturierte und effiziente Prompts in Markdown, XML und JSON.">
+    <meta property="og:type" content="website" />
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-tertiary: #f3f4f6;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --border: #e5e7eb;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: #dbeafe;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        [data-theme="dark-slate"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-tertiary: #94a3b8;
+            --border: #334155;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-light: #1e3a8a;
+        }
+
+        [data-theme="dark-midnight"] {
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --bg-tertiary: #171717;
+            --text-primary: #fafafa;
+            --text-secondary: #a3a3a3;
+            --text-tertiary: #737373;
+            --border: #262626;
+            --accent: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --accent-light: #4c1d95;
+        }
+
+        [data-theme="light-warm"] {
+            --bg-primary: #fffbeb;
+            --bg-secondary: #fef3c7;
+            --bg-tertiary: #fde68a;
+            --text-primary: #78350f;
+            --text-secondary: #92400e;
+            --text-tertiary: #b45309;
+            --border: #fbbf24;
+            --accent: #f59e0b;
+            --accent-hover: #d97706;
+            --accent-light: #fef3c7;
+        }
+
+        [data-theme="light-cool"] {
+            --bg-primary: #f0f9ff;
+            --bg-secondary: #e0f2fe;
+            --bg-tertiary: #bae6fd;
+            --text-primary: #0c4a6e;
+            --text-secondary: #075985;
+            --text-tertiary: #0284c7;
+            --border: #7dd3fc;
+            --accent: #0ea5e9;
+            --accent-hover: #0284c7;
+            --accent-light: #e0f2fe;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theme-selector {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .theme-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .theme-btn:hover { transform: scale(1.1); }
+        .theme-btn.active { box-shadow: 0 0 0 2px var(--accent); }
+
+        .theme-btn-default { background: linear-gradient(135deg, #ffffff 50%, #1f2937 50%); }
+        .theme-btn-slate { background: #1e293b; }
+        .theme-btn-midnight { background: #000000; }
+        .theme-btn-warm { background: #fef3c7; }
+        .theme-btn-cool { background: #e0f2fe; }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            display: grid;
+            grid-template-columns: 480px 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .container { grid-template-columns: 1fr; }
+            .header-content { flex-direction: column; gap: 1rem; align-items: stretch; }
+            .theme-selector { order: 3; justify-content: center; }
+            .logo { justify-content: center; }
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            animation: slideIn 0.4s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .callout {
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 12px;
+            background: var(--accent-light);
+            margin: 0 0 1.5rem 0;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        [data-theme*="dark"] .callout {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+            border-left-color: var(--accent);
+        }
+
+        .usecase-box {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: var(--text-secondary);
+        }
+
+        .input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        select.input {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            padding-right: 2.5rem;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        textarea.input {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-primary);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .list-item {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+
+        .list-item .input {
+            flex: 1;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            transition: all 0.2s ease;
+        }
+
+        .tab:hover { background: var(--bg-tertiary); }
+        .tab.active {
+            color: var(--accent);
+            background: var(--accent-light);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .editor {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            min-height: 600px;
+            flex-grow: 1;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+            overflow: auto;
+            white-space: pre-wrap;
+            position: relative;
+        }
+
+        .editor[contenteditable="true"] { outline: none; }
+        .editor[contenteditable="true"]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        .library-item {
+            padding: 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .library-item:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow);
+        }
+
+        .library-item-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .library-item-meta {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-bottom: 0.75rem;
+        }
+
+        .success {
+            padding: 0.75rem;
+            background: #efe;
+            border: 1px solid #cfc;
+            border-radius: 8px;
+            color: #060;
+            font-size: 0.875rem;
+            margin-top: 0.75rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        [data-theme*="dark"] .success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #34d399;
+        }
+    </style>
+</head>
+<body>
+<header class="header">
+    <div class="header-content">
+        <a href="/" class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+            </svg>
+            Prompt Generator
+        </a>
+
+        <div class="theme-selector">
+            <button class="theme-btn theme-btn-default active" data-theme="default" title="Default"></button>
+            <button class="theme-btn theme-btn-slate" data-theme="dark-slate" title="Dark Slate"></button>
+            <button class="theme-btn theme-btn-midnight" data-theme="dark-midnight" title="Dark Midnight"></button>
+            <button class="theme-btn theme-btn-warm" data-theme="light-warm" title="Light Warm"></button>
+            <button class="theme-btn theme-btn-cool" data-theme="light-cool" title="Light Cool"></button>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="panel">
+        <h2 class="panel-title">Prompt Structure</h2>
+        <div class="callout">
+            <strong>Merksatz:</strong> Erst <strong>Task</strong>, dann <strong>Ziel/Regeln</strong>, dann <strong>Input</strong>, dann <strong>Output-Format</strong>.
+        </div>
+
+        <div class="usecase-box">
+            <label class="label">Vorlagen aus dem Workshop laden</label>
+            <div style="display: flex; gap: 0.5rem;">
+                <select class="input" id="useCaseSelect" style="flex: 1;">
+                    <option value="" disabled selected>-- Use Case auswählen --</option>
+                    <option value="1">1) Zusammenfassung von Meetings & Protokollen</option>
+                    <option value="2">2) Wissenschaftliche Publikationen zusammenfassen</option>
+                    <option value="3">3) Experteninput adressatengerecht aufbereiten</option>
+                    <option value="4">4) Antwortschreiben / Anfragen formulieren</option>
+                    <option value="5">5) Bürgeranfragen in einfacher Sprache</option>
+                    <option value="6">6) Arbeitsanweisungen / Prozessdefinition</option>
+                    <option value="7">7) Bewertung nach standardisierten Kriterien</option>
+                    <option value="8">8) Abgleich mit Leitlinien/DIN (Gap-Analyse)</option>
+                </select>
+                <button class="btn btn-primary" id="loadUseCaseBtn">Laden</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="label">Titel (nur intern zur Speicherung)</label>
+            <input type="text" class="input" id="title" placeholder="z. B. Zusammenfassung Meeting">
+        </div>
+
+        <div class="form-group">
+            <label class="label">1. Task (Aufgabe)</label>
+            <textarea class="input" id="task" placeholder="Was genau soll die KI tun?"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="label">2. Ziel (Goal)</label>
+            <textarea class="input" id="goal" placeholder="Was ist das gewünschte Endresultat? Für wen?"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="label">3. Kontext</label>
+            <textarea class="input" id="context" placeholder="Fachlicher Hintergrund oder Rahmenbedingungen"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="label">4. Ausgabeformat</label>
+            <textarea class="input" id="outputFormat" placeholder="Z. B. 3 Bulletpoints, eine Tabelle, ein Fließtext..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <div class="section-header">
+                <label class="label" style="margin:0;">5. Regeln (Constraints)</label>
+                <button class="btn btn-secondary" id="addRule" style="padding: 0.2rem 0.6rem; font-size: 0.8rem;">+ Hinzufügen</button>
+            </div>
+            <div id="rulesList"></div>
+        </div>
+
+        <div class="form-group">
+            <label class="label">6. Input / Material (Platzhalter)</label>
+            <textarea class="input" id="inputData" style="min-height: 120px; font-family: monospace;" placeholder="Wie wird der Input strukturiert übergeben?">&lt;&lt;&lt;INPUT&gt;&gt;&gt;&#10;[Hier Text/Daten einfügen]&#10;&lt;&lt;&lt;END&gt;&gt;&gt;</textarea>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" id="savePrompt">In Bibliothek speichern</button>
+            <button class="btn btn-secondary" id="clearAll">Felder leeren</button>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <h3 class="panel-title" style="font-size: 1.1rem;">Eigene Bibliothek</h3>
+            <div id="libraryList"></div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <h2 class="panel-title" style="margin:0;">Preview & Export</h2>
+            <button class="btn btn-success" id="copyBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                Prompt Kopieren
+            </button>
+        </div>
+        <div id="copyFeedback"></div>
+
+        <div class="tabs" style="margin-top: 1rem;">
+            <button class="tab active" data-editor="markdown">Markdown</button>
+            <button class="tab" data-editor="xml">XML</button>
+            <button class="tab" data-editor="json">JSON</button>
+        </div>
+
+        <div class="editor" contenteditable="true" id="editor" spellcheck="false"></div>
+    </div>
+</div>
+
+<script>
+    const USE_CASES = {
+        "1": {
+            title: "1) Meeting Protokoll",
+            task: "Erstelle aus den folgenden Meeting-Notizen ein strukturiertes Ergebnisprotokoll.",
+            goal: "Kurz, präzise, fachlich korrekt.\nFokus auf Entscheidungen, offene Punkte und To-dos.",
+            context: "Keine Erfindungen / keine Ergänzungen außerhalb des Inputs.",
+            outputFormat: "### 1. Meeting-Überblick\n- Datum:\n- Thema:\n- Teilnehmende:\n\n### 2. Kernaussagen (max. 5 Bullet Points)\n\n### 3. Entscheidungen / Beschlüsse\n| Nr. | Beschluss | Begründung |\n|---|---|---|\n\n### 4. To-dos\n| Nr. | Aufgabe | Verantwortlich | Frist | Status |\n|---|---|---|---|---|",
+            rules: [
+                "Wenn Informationen fehlen, schreibe 'nicht genannt'",
+                "Trenne Fakten von Vermutungen"
+            ],
+            inputData: "<<<MEETING_NOTIZEN>>>\n[Notizen hier einfügen]\n<<<END>>>"
+        },
+        "2": {
+            title: "2) Wissenschaftliche Publikation",
+            task: "Analysiere die folgende wissenschaftliche Publikation (oder Auszug) und erstelle eine strukturierte Zusammenfassung.",
+            goal: "Übersichtliche Aufbereitung für Fachanwender zur schnellen Entscheidungsfindung.",
+            context: "Es handelt sich um medizinische/wissenschaftliche Fachtexte.",
+            outputFormat: "### 1. Kurzzusammenfassung (max. 120 Wörter)\n\n### 2. Studiensteckbrief\n| Feld | Inhalt |\n|---|---|\n| Fragestellung / Ziel | |\n| Studientyp | |\n| Population | |\n| Intervention / Exposition | |\n| Endpunkte | |\n\n### 3. Zentrale Ergebnisse\n- Ergebnis 1:\n- Ergebnis 2:\n\n### 4. Limitationen",
+            rules: [
+                "Fehlende Angaben mit 'nicht berichtet' markieren",
+                "Zahlen und Metriken exakt übernehmen"
+            ],
+            inputData: "<<<PUBLIKATION>>>\n[Abstract / Auszug einfügen]\n<<<END>>>"
+        },
+        "3": {
+            title: "3) Experteninput adressatengerecht aufbereiten",
+            task: "Bereite den folgenden Experteninput für unterschiedliche Zielgruppen auf.",
+            goal: "1. Fachpublikum\n2. Management/Leitung\n3. Bürger:innen / Öffentlichkeit",
+            context: "Fachliche Erkenntnisse müssen je nach Vorwissen der Zielgruppe unterschiedlich detailliert kommuniziert werden.",
+            outputFormat: "### A) Fachversion (max. 180 Wörter)\n\n### B) Management-Version (max. 120 Wörter, mit 'Empfehlung:')\n\n### C) Bürgerverständliche Version (max. 130 Wörter)\n\n### D) Unterschiede in der Aussage-Tiefe (3 Bullet Points)",
+            rules: [
+                "Gleiche Kernaussage beibehalten",
+                "Keine neuen Fakten hinzufügen",
+                "Unsicherheiten in der Übersetzung nicht glätten"
+            ],
+            inputData: "<<<EXPERTENINPUT>>>\n[Fachtext einfügen]\n<<<END>>>"
+        },
+        "4": {
+            title: "4) Antwortschreiben / Anfragen formulieren",
+            task: "Erstelle einen Entwurf für ein Antwortschreiben auf die untenstehende Anfrage.",
+            goal: "Sachlich, korrekt, nachvollziehbar und adressatengerecht (professionell, freundlich).",
+            context: "Antwort darf nur auf Basis der intern bereitgestellten Fakten erfolgen.",
+            outputFormat: "### 1. Kurzklassifikation\n- Thema:\n- Antworttyp:\n- Dringlichkeit:\n- Fehlende Infos:\n\n### 2. Entwurf Antwortschreiben\n[Fließtext]\n\n### 3. Interne Prüfpunkte vor Versand",
+            rules: [
+                "Nur auf Basis der bereitgestellten Fakten argumentieren",
+                "Offene interne Klärungen nicht nach außen kommunizieren, sondern im Anschreiben neutral formulieren"
+            ],
+            inputData: "<<<ANFRAGE>>>\n[Text der Anfrage einfügen]\n<<<END>>>\n\n<<<KONTEXT>>>\n[Interne Fakten zur Antwort einfügen]\n<<<END>>>"
+        },
+        "5": {
+            title: "5) Bürgeranfragen in einfacher Sprache",
+            task: "Formuliere den folgenden fachlichen Text als Antwort für Bürger:innen in allgemeinverständlicher Sprache um.",
+            goal: "Verständlich, ohne die fachliche Kernaussage zu verfälschen.",
+            context: "Kommunikation zwischen Behörde/Fachexperten und der Öffentlichkeit.",
+            outputFormat: "### 1. Bürgerverständliche Version (max. 180 Wörter)\n\n### 2. Schwierige Begriffe erklärt\n| Fachbegriff | Einfache Erklärung |\n|---|---|\n\n### 3. Prüfliste (ja/nein)\n- Fachlich korrekt geblieben?\n- Verständlich ohne Vorwissen?",
+            rules: [
+                "Kurze Sätze (möglichst 8–18 Wörter)",
+                "Fachbegriffe vermeiden oder in Tabelle 2 direkt erklären",
+                "Keine unnötigen Abkürzungen",
+                "Aktive Formulierungen bevorzugen"
+            ],
+            inputData: "<<<FACHTEXT>>>\n[Komplexen Fachtext einfügen]\n<<<END>>>"
+        },
+        "6": {
+            title: "6) Arbeitsanweisungen / Prozessdefinition",
+            task: "Erstelle aus den folgenden Informationen eine strukturierte Arbeitsanweisung / Prozessdefinition.",
+            goal: "Eine standardisierte, leicht lesbare Dokumentation für das Team.",
+            context: "Aus losen Notizen oder Meetings soll ein verbindlicher Standardprozess abgeleitet werden.",
+            outputFormat: "### 1. Dokumentkopf\n- Titel:\n- Zweck:\n- Verantwortlich:\n\n### 2. Voraussetzungen / Inputs\n\n### 3. Prozessablauf (Schritt-für-Schritt)\n| Schritt | Tätigkeit | Verantwortlich | Input | Output | Hinweis/Risiko |\n|---|---|---|---|---|---|\n\n### 4. Ausnahmen & Entscheidungsstellen",
+            rules: [
+                "Fehlende Verantwortlichkeiten mit 'zu klären' markieren",
+                "Klare und imperative Sprache verwenden (z.B. 'Dokument prüfen' statt 'Man könnte das Dokument prüfen')"
+            ],
+            inputData: "<<<PROZESSINFOS>>>\n[Stichpunkte / Notizen zum Prozess einfügen]\n<<<END>>>"
+        },
+        "7": {
+            title: "7) Bewertung nach standardisierten Kriterien",
+            task: "Bewerte den vorliegenden Text nach standardisierten Kriterien und dokumentiere die Bewertung nachvollziehbar.",
+            goal: "Objektive Evaluierung statt freier Meinung.",
+            context: "Der Text soll strukturiert nach vorgegebenen qualitativen Merkmalen eingeschätzt werden.",
+            outputFormat: "### 1. Kurzeinschätzung (max. 80 Wörter)\n\n### 2. Bewertungstabelle\n| Kriterium | Score (0-2) | Begründung |\n|---|---|---|\n| Fachliche Klarheit | | |\n| Vollständigkeit | | |\n| Nachvollziehbarkeit | | |\n\n### 3. Verbesserungsvorschläge (priorisiert)",
+            rules: [
+                "Bewerte nur auf Basis des Inputs",
+                "Kennzeichne fehlende Informationen transparent als 'nicht bewertbar'",
+                "Begründe jede Score-Vergabe"
+            ],
+            inputData: "<<<TEXT>>>\n[Zu bewertenden Text einfügen]\n<<<END>>>"
+        },
+        "8": {
+            title: "8) Abgleich mit Leitlinien (Gap-Analyse)",
+            task: "Führe einen strukturierten Abgleich zwischen einem eingereichten Text und den bereitgestellten Leitlinienanforderungen durch.",
+            goal: "Eine saubere Gap-Analyse, die aufzeigt, welche Anforderungen erfüllt sind und wo nachgebessert werden muss.",
+            context: "Regulatory Affairs / Compliance / Qualitätssicherung.",
+            outputFormat: "### 1. Kurzfazit (max. 120 Wörter)\n\n### 2. Gap-Analyse-Tabelle\n| Anforderung-ID | Anforderung (Kurzfassung) | Status | Evidenz im Text | Kommentar / Risiko |\n|---|---|---|---|---|\n\n### 3. Priorisierte Nachforderungen / Klärungsfragen\n| Priorität | Klärungsbedarf | Begründung |\n|---|---|---|",
+            rules: [
+                "Nur mit bereitgestellten Texten arbeiten",
+                "Wenn keine Evidenz gefunden wird, Status auf 'Nicht erfüllt' setzen und Evidenz auf 'nicht auffindbar'",
+                "Status-Optionen: Erfüllt / Teilweise / Nicht erfüllt / Unklar"
+            ],
+            inputData: "<<<GUIDELINES>>>\n[Nummerierte Anforderungen / Leitlinien einfügen]\n<<<END>>>\n\n<<<EINREICHUNG>>>\n[Eingereichten Text einfügen]\n<<<END>>>"
+        }
+    };
+
+    const state = {
+        theme: localStorage.getItem('theme') || 'default',
+        currentEditor: 'markdown',
+        library: JSON.parse(localStorage.getItem('promptLibrary') || '[]')
+    };
+
+    function init() {
+        // Theme Setup
+        document.documentElement.setAttribute('data-theme', state.theme);
+        document.querySelector(`[data-theme="${state.theme}"]`)?.classList.add('active');
+
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.theme = btn.dataset.theme;
+                localStorage.setItem('theme', state.theme);
+                document.documentElement.setAttribute('data-theme', state.theme);
+                document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Tabs Setup
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                state.currentEditor = tab.dataset.editor;
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                updatePreview();
+            });
+        });
+
+        // Event Listeners
+        document.getElementById('addRule').addEventListener('click', addRule);
+        document.getElementById('savePrompt').addEventListener('click', savePrompt);
+        document.getElementById('clearAll').addEventListener('click', clearAll);
+        document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
+        document.getElementById('loadUseCaseBtn').addEventListener('click', loadUseCase);
+
+        // Input Listeners for real-time update
+        ['title', 'task', 'goal', 'context', 'outputFormat', 'inputData'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updatePreview);
+        });
+
+        // Initial setup
+        if(document.querySelectorAll('#rulesList .list-item').length === 0) {
+            addRule();
+        }
+
+        renderLibrary();
+        updatePreview();
+    }
+
+    function addRule(value = "") {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = `
+                <input type="text" class="input" value="${value}" placeholder="Regel eingeben (z.B. Keine Erfindungen)">
+                <button class="icon-btn" onclick="this.parentElement.remove(); updatePreview()">×</button>
+            `;
+        div.querySelector('input').addEventListener('input', updatePreview);
+        document.getElementById('rulesList').appendChild(div);
+    }
+
+    function loadUseCase() {
+        const select = document.getElementById('useCaseSelect');
+        const caseId = select.value;
+        
+        if (!caseId) {
+            alert("Bitte wähle zuerst eine Vorlage aus dem Dropdown-Menü aus.");
+            return;
+        }
+
+        const data = USE_CASES[caseId];
+        
+        document.getElementById('title').value = data.title;
+        document.getElementById('task').value = data.task;
+        document.getElementById('goal').value = data.goal;
+        document.getElementById('context').value = data.context;
+        document.getElementById('outputFormat').value = data.outputFormat;
+        document.getElementById('inputData').value = data.inputData;
+
+        // Clear and load rules
+        document.getElementById('rulesList').innerHTML = '';
+        data.rules.forEach(rule => addRule(rule));
+
+        updatePreview();
+        
+        const feedback = document.getElementById('copyFeedback');
+        feedback.innerHTML = `<div class="success">Vorlage "${data.title}" erfolgreich geladen!</div>`;
+        setTimeout(() => feedback.innerHTML = '', 3000);
+    }
+
+    function getPromptData() {
+        const rules = Array.from(document.querySelectorAll('#rulesList input'))
+            .map(i => i.value.trim()).filter(Boolean);
+
+        return {
+            title: document.getElementById('title').value.trim(),
+            task: document.getElementById('task').value.trim(),
+            goal: document.getElementById('goal').value.trim(),
+            context: document.getElementById('context').value.trim(),
+            outputFormat: document.getElementById('outputFormat').value.trim(),
+            inputData: document.getElementById('inputData').value.trim(),
+            rules: rules
+        };
+    }
+
+    function updatePreview() {
+        const data = getPromptData();
+        const editor = document.getElementById('editor');
+
+        if (state.currentEditor === 'markdown') {
+            let md = `# Aufgabe\n${data.task || '[Bitte Task definieren]'}\n\n`;
+            
+            if (data.goal) md += `## Ziel\n${data.goal}\n\n`;
+            if (data.context) md += `## Kontext\n${data.context}\n\n`;
+            if (data.outputFormat) md += `## Ausgabeformat\n${data.outputFormat}\n\n`;
+            
+            if (data.rules.length > 0) {
+                md += `## Regeln\n${data.rules.map(r => `- ${r}`).join('\n')}\n\n`;
+            }
+            
+            if (data.inputData) md += `## Input\n${data.inputData}\n`;
+            
+            editor.textContent = md.trim();
+        } 
+        else if (state.currentEditor === 'xml') {
+            let xml = `<prompt>\n`;
+            xml += `  <task>${data.task || ''}</task>\n`;
+            if (data.goal) xml += `  <goal>${data.goal}</goal>\n`;
+            if (data.context) xml += `  <context>${data.context}</context>\n`;
+            if (data.outputFormat) xml += `  <output_format>\n    ${data.outputFormat.replace(/\n/g, '\n    ')}\n  </output_format>\n`;
+            
+            if (data.rules.length > 0) {
+                xml += `  <rules>\n`;
+                data.rules.forEach(r => { xml += `    <rule>${r}</rule>\n`; });
+                xml += `  </rules>\n`;
+            }
+            
+            if (data.inputData) xml += `  <input><![CDATA[\n${data.inputData}\n  ]]></input>\n`;
+            xml += `</prompt>`;
+            
+            editor.textContent = xml;
+        }
+        else if (state.currentEditor === 'json') {
+            editor.textContent = JSON.stringify(data, null, 2);
+        }
+    }
+
+    function copyToClipboard() {
+        const text = document.getElementById('editor').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            const feedback = document.getElementById('copyFeedback');
+            feedback.innerHTML = '<div class="success">Prompt erfolgreich in die Zwischenablage kopiert! Bereit zum Einfügen in ChatGPT, Claude etc.</div>';
+            setTimeout(() => feedback.innerHTML = '', 4000);
+        });
+    }
+
+    function savePrompt() {
+        const data = getPromptData();
+        if (!data.title) {
+            alert('Bitte gib dem Prompt einen Titel, um ihn zu speichern.');
+            document.getElementById('title').focus();
+            return;
+        }
+
+        const prompt = {
+            id: Date.now(),
+            ...data,
+            timestamp: new Date().toISOString()
+        };
+
+        state.library.unshift(prompt);
+        localStorage.setItem('promptLibrary', JSON.stringify(state.library));
+        renderLibrary();
+
+        const feedback = document.getElementById('copyFeedback');
+        feedback.innerHTML = '<div class="success">Prompt in der lokalen Bibliothek gespeichert!</div>';
+        setTimeout(() => feedback.innerHTML = '', 3000);
+    }
+
+    function loadLibraryPrompt(id) {
+        const prompt = state.library.find(p => p.id === id);
+        if (!prompt) return;
+
+        document.getElementById('title').value = prompt.title || '';
+        document.getElementById('task').value = prompt.task || '';
+        document.getElementById('goal').value = prompt.goal || '';
+        document.getElementById('context').value = prompt.context || '';
+        document.getElementById('outputFormat').value = prompt.outputFormat || '';
+        document.getElementById('inputData').value = prompt.inputData || '<<<INPUT>>>\n\n<<<END>>>';
+
+        document.getElementById('rulesList').innerHTML = '';
+        if (prompt.rules && prompt.rules.length > 0) {
+            prompt.rules.forEach(r => addRule(r));
+        } else {
+            addRule(); 
+        }
+
+        updatePreview();
+    }
+
+    function deleteLibraryPrompt(id) {
+        if (!confirm('Prompt wirklich löschen?')) return;
+        state.library = state.library.filter(p => p.id !== id);
+        localStorage.setItem('promptLibrary', JSON.stringify(state.library));
+        renderLibrary();
+    }
+
+    function renderLibrary() {
+        const list = document.getElementById('libraryList');
+        if (state.library.length === 0) {
+            list.innerHTML = '<p style="color: var(--text-tertiary); font-size: 0.875rem;">Noch keine Prompts gespeichert.</p>';
+            return;
+        }
+
+        list.innerHTML = state.library.map(p => `
+                <div class="library-item">
+                    <div class="library-item-title">${p.title}</div>
+                    <div class="library-item-meta">${new Date(p.timestamp).toLocaleDateString()}</div>
+                    <div class="btn-group" style="margin-top:0.5rem;">
+                        <button class="btn btn-secondary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;" onclick="loadLibraryPrompt(${p.id})">Laden</button>
+                        <button class="btn btn-secondary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;" onclick="deleteLibraryPrompt(${p.id})">Löschen</button>
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    function clearAll() {
+        if (!confirm('Alle Felder leeren?')) return;
+        document.getElementById('title').value = '';
+        document.getElementById('task').value = '';
+        document.getElementById('goal').value = '';
+        document.getElementById('context').value = '';
+        document.getElementById('outputFormat').value = '';
+        document.getElementById('inputData').value = '<<<INPUT>>>\n[Hier Text/Daten einfügen]\n<<<END>>>';
+        document.getElementById('useCaseSelect').value = '';
+        
+        document.getElementById('rulesList').innerHTML = '';
+        addRule();
+        
+        updatePreview();
+    }
+
+    init();
+</script>
+</body>
+</html>
